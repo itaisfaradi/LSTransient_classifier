@@ -3,7 +3,7 @@ import torch.nn as nn
 
 @dataclass
 class LSTMConfig:
-    input_dim: int = 6
+    input_dim: int = 7
     hidden_dim: int = 64
     num_layers: int = 2
     bidirectional: bool = True
@@ -13,9 +13,11 @@ class LSTMClassifier(nn.Module):
     """
     Bidirectional LSTM classifier for irregularly sampled time-series.
 
-    Expects input of shape (B, L, F) where the last two features are binary
-    coverage masks for the g and r photometric bands. Uses masked mean pooling
-    over valid time steps before classification.
+    Expects input of shape (B, L, 7) with features 
+    [t, g_flux, r_flux, g_err, r_err, g_mask, r_mask],
+    where the last two features are binary coverage masks for the 
+    g and r photometric bands. Uses masked mean pooling over valid 
+    time steps before classification.
 
     Output is a single logit per sample (use BCEWithLogitsLoss for training).
     """

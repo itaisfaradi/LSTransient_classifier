@@ -127,8 +127,8 @@ def _clip_bands_to_peak(tg, yg, eg, tr, yr, er):
 class TwoBandLC(Dataset):
     """PyTorch Dataset for two-band (g, r) astronomical light curves.
 
-    Each item is a feature tensor X of shape (L, 6):
-        [g_flux, r_flux, g_err, r_err, g_mask, r_mask]
+    Each item is a feature tensor X of shape (L, 7):
+        [t, g_flux, r_flux, g_err, r_err, g_mask, r_mask]
     where mask is 1 where the interpolation is valid, 0 otherwise.
 
     Args:
@@ -207,7 +207,9 @@ class TwoBandLC(Dataset):
             r_err_feat = np.ones_like(r_feat, dtype=np.float32)
 
         # Features: (L, F)
-        X = np.stack([g_feat, r_feat, g_err_feat, r_err_feat, g_mask, r_mask], axis=1).astype(np.float32)
+        t_norm = (grid / self.T).astype(np.float32)   # shape (L,), values in [0, 1]
 
-        y = float(obj["label"])  # 0.0 or 1.0
+        X = np.stack([t_norm, g_feat, r_feat, g_err_feat, r_err_feat, g_mask, r_mask], axis=1)
+
+        y = float(obj["label"])  # 0.0 (SN Ia) or 1.0 (TDE)
         return torch.from_numpy(X), torch.tensor(y, dtype=torch.float32)
