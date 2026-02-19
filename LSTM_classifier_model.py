@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import torch
 import torch.nn as nn
 
 @dataclass
@@ -11,36 +10,47 @@ class LSTMConfig:
     dropout: float = 0.2
 
 class LSTMClassifier(nn.Module):
-    def __init__(self, config):
-        super().__init__() # initialize parent class
-        self.input_proj = nn.Linear(config.input_dim, config.hidden_dim) # project input features to hidden_dim
+    """
+    Bidirectional LSTM classifier for irregularly sampled time-series.
 
-        # define LSTM layer
+    Expects input of shape (B, L, F) where the last two features are binary
+    coverage masks for the g and r photometric bands. Uses masked mean pooling
+    over valid time steps before classification.
+
+    Output is a single logit per sample (use BCEWithLogitsLoss for training).
+    """
+
+    def __init__(self, config: LSTMConfig):
+        super().__init__()
+        self.input_proj = nn.Linear(config.input_dim, config.hidden_dim)
+
         self.lstm = nn.LSTM(
-            input_size = config.hidden_dim, # hidden size after input projection
-            hidden_size = config.hidden_dim, # hidden size of LSTM
-            num_layers = config.num_layers, # number of LSTM layers
+            input_size = config.hidden_dim,
+            hidden_size = config.hidden_dim,
+            num_layers = config.num_layers,
             batch_first = True, # input/output tensors have shape (batch, seq, feature)
-            bidirectional = config.bidirectional, # use bidirectional LSTM
-            dropout = config.dropout if config.num_layers > 1 else 0.0 # apply dropout only if multiple layers
+            bidirectional = config.bidirectional,
+            dropout = config.dropout if config.num_layers > 1 else 0.0
         )
 
-        out_dim = config.hidden_dim * (2 if config.bidirectional else 1) # adjust output dim for bidirectionality
+        out_dim = config.hidden_dim * (2 if config.bidirectional else 1)
 
         self.head = nn.Sequential(
-            nn.Linear(out_dim, out_dim), # fully connected layer
-            # nn.LayerNorm(out_dim), # layer normalization
-            nn.ReLU(), # activation
-            nn.Dropout(config.dropout), # dropout for regularization
-            nn.Linear(out_dim, 1)   # single logit for binary classification
+            nn.Linear(out_dim, out_dim),
+            nn.ReLU(),
+            nn.Dropout(config.dropout),
+            nn.Linear(out_dim, 1)
         )
 
     def forward(self, x):
-        # """
-        # x: (B, L, F)
-        # We'll use masks from the last two features: g_mask, r_mask
-        # to create a combined time mask.
-        # """
+        """
+        Args:
+            x: Tensor of shape (B, L, F) — batch, sequence length, features.
+                x[..., -2] and x[..., -1] must be binary g/r band coverage masks.
+
+        Returns:
+            logit: Tensor of shape (B,) — one raw logit per sample.
+        """
         
         # combined mask: if either band has coverage at that time step
         g_mask = x[..., -2] # (B, L)
