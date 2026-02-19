@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+*.py0
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data and model binaries
+*.pkl
+*.pth
+
+# macOS
+.DS_Store
