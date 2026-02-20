@@ -53,7 +53,8 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(np.zeros(len(y_all)), y_al
         pos_weight=pos_weight, epochs=n_epochs, lr=lr, weight_decay=lr/10,
         verbose=True
     )
-    best_bal_acc = history.bal_acc.max()
+    best_epoch_idx = history.val_loss.argmin()
+    best_bal_acc = history.bal_acc[best_epoch_idx]
     fold_bal_acc.append(best_bal_acc)
     print(f"  Fold {fold+1} best bal_acc: {best_bal_acc:.4f}")
 

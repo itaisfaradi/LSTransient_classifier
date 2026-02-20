@@ -122,7 +122,7 @@ def train(model, train_loader, val_loader, device, pos_weight=None, epochs=30, l
         pos_weight=pos_weight.to(device) if pos_weight is not None else None
         )
 
-    best_val_metric = -1.0
+    best_val_metric = float("inf")
     best_state = None
 
     buf = {k: [] for k in ("train_loss", "val_loss", "acc", "bal_acc", "tp", "fp", "tn", "fn")}
@@ -174,8 +174,8 @@ def train(model, train_loader, val_loader, device, pos_weight=None, epochs=30, l
                     f"| val_logloss={val_loss_uw:.3f}"
                 )
         # save best model based on balanced accuracy
-        if bal_acc > best_val_metric:
-            best_val_metric = bal_acc
+        if val_loss < best_val_metric:
+            best_val_metric = val_loss
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
     
     # load best model state
