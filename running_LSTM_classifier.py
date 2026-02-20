@@ -62,7 +62,7 @@ val_loader = DataLoader(val_ds, batch_size=batch_size*2, shuffle=False, drop_las
 device = "cuda" if torch.cuda.is_available() else "mps"
 model = LSTMClassifier(LSTMConfig())
 
-n_eposchs = 500
+n_eposchs = 600
 lr = 1e-4
 model, history = \
 train(model, train_loader, val_loader, device, pos_weight=pos_weight, epochs=n_eposchs, lr=lr, weight_decay=lr/10)
