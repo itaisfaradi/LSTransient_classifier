@@ -93,7 +93,7 @@ def evaluate(model, loader, device, pos_weight=None, threshold=0.5):
     avg_uw = total_uw / max(total, 1)
     return avg, avg_uw, acc, (tp, fp, tn, fn)
 
-def train(model, train_loader, val_loader, device, pos_weight=None, epochs=30, lr=1e-3, weight_decay=1e-4):
+def train(model, train_loader, val_loader, device, pos_weight=None, epochs=30, lr=1e-3, weight_decay=1e-4, verbose=True):
     """Train the model and return the best checkpoint by balanced accuracy.
 
     Uses AdamW with gradient clipping. After each epoch, evaluates on the
@@ -108,6 +108,7 @@ def train(model, train_loader, val_loader, device, pos_weight=None, epochs=30, l
         epochs:       Number of training epochs.
         lr:           Learning rate for AdamW.
         weight_decay: L2 regularisation for AdamW.
+        verbose: If True, print metrics every 10 epochs (default True).
 
     Returns:
         model:   Model loaded with the best-performing state dict.
@@ -165,12 +166,13 @@ def train(model, train_loader, val_loader, device, pos_weight=None, epochs=30, l
         buf["tp"].append(tp); buf["fp"].append(fp)
         buf["tn"].append(tn); buf["fn"].append(fn)
         
-        if epoch % 10 == 0 or epoch == 1:
-            print(
-                f"Epoch {epoch:02d} | train_loss={train_loss:.4f} | val_loss={val_loss:.4f} "
-                f"| acc={val_acc:.3f} | bal_acc={bal_acc:.3f} | TP={tp} FP={fp} TN={tn} FN={fn} " 
-                f"| val_logloss={val_loss_uw:.3f}"
-            )
+        if verbose:
+            if epoch % 10 == 0 or epoch == 1:
+                print(
+                    f"Epoch {epoch:02d} | train_loss={train_loss:.4f} | val_loss={val_loss:.4f} "
+                    f"| acc={val_acc:.3f} | bal_acc={bal_acc:.3f} | TP={tp} FP={fp} TN={tn} FN={fn} " 
+                    f"| val_logloss={val_loss_uw:.3f}"
+                )
         # save best model based on balanced accuracy
         if bal_acc > best_val_metric:
             best_val_metric = bal_acc
