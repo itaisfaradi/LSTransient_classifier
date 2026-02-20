@@ -68,60 +68,33 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(np.zeros(len(labels)), lab
     fold_bal_acc.append(best_bal_acc)
     print(f"  Fold {fold+1} best bal_acc: {best_bal_acc:.4f}")
 
+    # saving history per fold
+    folder_name = f"output_models/full_lc/seed#{seed}/{fold}-fold"
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+    with open(folder_name + "/model_evals.pkl", "wb") as f:
+        pkl.dump(
+            {"tp": history.tp,
+              "fp": history.fp,
+              "tn": history.tn,
+              "fn": history.fn,
+              "acc": history.acc,
+              "bal_acc": history.bal_acc,
+              "train_loss": history.train_loss,
+              "val_loss": history.val_loss},
+            f
+        )
+
+    with open(folder_name + "/data_loaders.pkl", "wb") as f:
+        pkl.dump(
+            {
+              "train": train_loader,
+              "val": val_loader},
+            f
+        )
+
+    torch.save(model.state_dict(), folder_name + "/model.pth")
+
 print(f"\n=== K-Fold Results ===")
 print(f"  bal_acc per fold: {[f'{v:.4f}' for v in fold_bal_acc]}")
 print(f"  mean: {np.mean(fold_bal_acc):.4f}  std: {np.std(fold_bal_acc):.4f}")
-
-# # --- stratified split ---
-# splitter = StratifiedShuffleSplit(
-#     n_splits=1,
-#     test_size=0.3,
-#     random_state=seed
-# )
-
-# train_idx, val_idx = next(splitter.split(np.zeros(len(y_all)), y_all))
-
-# train_ds = Subset(dataset, train_idx)
-# val_ds   = Subset(dataset, val_idx)
-
-# print("Train positives:", y_all[train_idx].sum(),
-#       "Val positives:", y_all[val_idx].sum())
-
-# batch_size = 128
-# train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, drop_last=False)
-# val_loader = DataLoader(val_ds, batch_size=batch_size*2, shuffle=False, drop_last=False)
-
-# device = "cuda" if torch.cuda.is_available() else "mps"
-# model = LSTMClassifier(LSTMConfig())
-
-# n_eposchs = 600
-# lr = 1e-4
-# model, history = \
-# train(model, train_loader, val_loader, device, pos_weight=pos_weight, epochs=n_eposchs, lr=lr, weight_decay=lr/10)
-
-# folder_name = "output_models/up_to_peak_lc/seed{}".format(seed)
-# if not os.path.exists(folder_name):
-#     os.makedirs(folder_name)
-# with open(folder_name + "/model_evals.pkl", "wb") as f:
-#     pkl.dump(
-#         {"epoch": out_epoch,
-#           "tp": out_tp,
-#           "fp": out_fp,
-#           "tn": out_tn,
-#           "fn": out_fn,
-#           "acc": out_acc,
-#           "bal_acc": out_bal_acc,
-#           "train_loss": train_losses,
-#           "val_loss": val_losses},
-#         f
-#     )
-
-# with open(folder_name + "/data_loaders.pkl", "wb") as f:
-#     pkl.dump(
-#         {
-#           "train": train_loader,
-#           "val": val_loader},
-#         f
-#     )
-
-# torch.save(model.state_dict(), folder_name + "/model.pth")
