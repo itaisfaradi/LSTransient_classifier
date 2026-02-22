@@ -13,7 +13,7 @@ import os
 #------------------------------------------------------------------------#
 # Setting random seed #
 #------------------------------------------------------------------------#
-seed = 0
+seed = 123
 random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
